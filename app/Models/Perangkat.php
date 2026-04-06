@@ -8,6 +8,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Database\Eloquent\Builder;
+use Carbon\Carbon;
 
 class Perangkat extends Model
 {
@@ -27,6 +28,8 @@ class Perangkat extends Model
         'tahun_pengadaan',
         'sumber_pendanaan',
         'harga_beli',
+        'harga_total', 
+        'masa_pakai_bulan',
         'keterangan',
         'status_id',
         'created_by',
@@ -38,6 +41,59 @@ class Perangkat extends Model
         'tanggal_supervisi' => 'date',
         'harga_beli' => 'integer',
   ];
+
+  // 2. Accessor: Hitung Bulan Terpakai
+    public function getBulanTerpakaiAttribute(): int
+    {
+        if (!$this->tanggal_pengadaan) return 0;
+
+        $pengadaan = Carbon::parse($this->tanggal_pengadaan)->startOfMonth();
+        $sekarang = Carbon::now()->startOfMonth();
+
+        if ($pengadaan->greaterThan($sekarang)) return 0;
+
+        return $pengadaan->diffInMonths($sekarang);
+    }
+
+    // 3. Accessor: Hitung Sisa Masa Pakai
+    public function getSisaMasaPakaiAttribute(): int
+    {
+        if (!$this->masa_pakai_bulan) return 0;
+        
+        $sisa = $this->masa_pakai_bulan - $this->bulan_terpakai;
+        return max(0, $sisa);
+    }
+
+    // 4. Accessor: Total Penyusutan (Berapa banyak harga yang sudah susut)
+    public function getTotalPenyusutanAttribute(): float
+    {
+        $basis_harga = $this->harga_total ?? $this->harga_beli ?? 0;
+
+        if (!$basis_harga || !$this->masa_pakai_bulan || $this->masa_pakai_bulan <= 0) {
+            return 0;
+        }
+
+        // Jika sudah melewati masa pakai, berarti menyusut sepenuhnya
+        if ($this->bulan_terpakai >= $this->masa_pakai_bulan) {
+            return (float) $basis_harga;
+        }
+
+        $penyusutan_per_bulan = $basis_harga / $this->masa_pakai;
+        return $penyusutan_per_bulan * $this->bulan_terpakai;
+    }
+
+    // 5. Accessor: Harga Residu (Harga Saat Ini)
+    public function getHargaResiduAttribute(): float
+    {
+        $basis_harga = $this->harga_total ?? $this->harga_beli ?? 0;
+
+        if (!$basis_harga || !$this->masa_pakai_bulan || $this->masa_pakai <= 0) {
+            return (float) $basis_harga;
+        }
+
+        $residu = $basis_harga - $this->total_penyusutan;
+        return max(0, round($residu));
+    }
 
   public function lokasi(): BelongsTo
   {

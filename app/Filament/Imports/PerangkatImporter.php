@@ -3,6 +3,7 @@
 namespace App\Filament\Imports;
 
 use App\Models\Perangkat;
+use App\Models\Kategori;
 use App\Models\Lokasi;
 use App\Models\Status;
 use App\Models\Kondisi;
@@ -159,18 +160,20 @@ class PerangkatImporter implements
     {
         // Foreign Keys
         $lokasi_id  = $this->getOrCreateId($this->lokasiMap,  Lokasi::class,  'nama_lokasi',  $row['lokasi'] ?? null);
-        // Cek apakah kolom status ada isinya. Jika kosong string atau null, biarkan null.
-        // Jika Anda ingin Default 'Baik', ganti null di paling belakang dengan 'Baik'
+        
         $inputStatus = !empty($row['status']) ? $row['status'] : null; 
-
         $status_id  = $this->getOrCreateId($this->statusMap,  Status::class,  'nama_status', $inputStatus);
 
-        // Kondisi juga sama, mau default 'Baik' atau null?
-        $inputKondisi = !empty($row['kondisi']) ? $row['kondisi'] : null; // Contoh ini tetap default Baik
+        $inputKondisi = !empty($row['kondisi']) ? $row['kondisi'] : null;
         $kondisi_id = $this->getOrCreateId($this->kondisiMap, Kondisi::class, 'nama_kondisi', $inputKondisi);
 
-        // Cleaning Data
+        // Cleaning Data Harga Beli
         $harga = !empty($row['harga_beli']) ? (int)preg_replace('/\D+/', '', (string)$row['harga_beli']) : 0;
+        
+        // --- LOGIC BARU UNTUK HARGA TOTAL ---
+        // Jika di excel ada kolom 'harga_total', gunakan itu. Jika tidak, samakan dengan harga_beli.
+        $harga_total = !empty($row['harga_total']) ? (int)preg_replace('/\D+/', '', (string)$row['harga_total']) : $harga;
+        
         $tglPengadaan = $this->parseTanggal($row['tanggal_pengadaan'] ?? null);
         
         // Resolve IDs
@@ -184,7 +187,11 @@ class PerangkatImporter implements
         $kategoriObj = $this->resolveKategoriByKodeAndName($kodeKategoriExcel, $namaKategoriExcel, $namaPerangkat);
         $kategori_id = $kategoriObj ? $kategoriObj->id : null;
 
-        // CREATE (Sesuai $fillable Model yang Baru)
+        // --- LOGIC BARU UNTUK MASA PAKAI ---
+        // Jika di excel masa_pakai ada, pakai itu. Jika kosong, tarik otomatis dari Kategori
+        $masa_pakai = !empty($row['masa_pakai']) ? (int)$row['masa_pakai'] : ($kategoriObj->masa_pakai ?? null);
+
+        // CREATE
         Perangkat::create([
             'lokasi_id'         => $lokasi_id,
             'nomor_inventaris'  => $nomor,
@@ -198,9 +205,10 @@ class PerangkatImporter implements
             'tahun_pengadaan'   => $tahun,
             'sumber_pendanaan'  => $row['sumber_pendanaan'] ?? null,
             'harga_beli'        => $harga,
+            'harga_total'       => $harga_total, // Simpan harga_total
+            'masa_pakai'        => $masa_pakai,  // Simpan masa pakai
             'keterangan'        => $row['keterangan'] ?? null,
             'status_id'         => $status_id,
-            // 'created_by'     => auth()->id(), 
         ]);
     }
 }

@@ -12,6 +12,9 @@ use Filament\Schemas\Schema;
 use Filament\Schemas\Components\Tabs;
 use Filament\Schemas\Components\Tabs\Tab;
 
+// 1. Cukup import Model Kategori saja, hapus import Set dan Get
+use App\Models\Kategori;
+
 class AlatRumahTanggaForm
 {
     public static function configure(Schema $schema): Schema
@@ -26,17 +29,21 @@ class AlatRumahTanggaForm
                             ->maxLength(255)
                             ->columnSpan(2),
 
-                        // Select::make('kategori_id')
-                        //     ->relationship('kategori', 'nama_kategori')
-                        //     ->label('Kategori')
-                        //     ->searchable()
-                        //     ->preload(),
-                        //     // ->createOptionForm([TextInput::make('nama_kategori')->required()]),
                         Select::make('kategori_id')
                             ->relationship('kategori', 'nama_kategori')
                             ->label('Kategori')
                             ->searchable()
                             ->preload()
+                            ->live() 
+                            // 2. Ganti Set dan Get dengan "callable"
+                            ->afterStateUpdated(function (callable $set, callable $get, $state) {
+                                if ($state) {
+                                    $kategori = Kategori::find($state);
+                                    if ($kategori && $kategori->masa_pakai && empty($get('masa_pakai'))) {
+                                        $set('masa_pakai', $kategori->masa_pakai);
+                                    }
+                                }
+                            })
                             ->createOptionForm([
                                 TextInput::make('nama_kategori')
                                     ->label('Nama Kategori')
@@ -50,13 +57,12 @@ class AlatRumahTanggaForm
                                     ->regex('/^\d{3}$/')
                                     ->helperText('Masukkan 3 digit angka, contoh: 002'),
                             ]),
-                        // --- INPUT JENIS (WAJIB ADA) ---
+
                         Select::make('jenis_id')
-                            ->relationship('jenis', 'nama_jenis') // Asumsi kolom di tabel jenis adalah 'nama'
+                            ->relationship('jenis', 'nama_jenis')
                             ->label('Jenis Perangkat')
                             ->searchable()
                             ->preload(),
-                            // ->createOptionForm([TextInput::make('nama_jenis')->required()]),
 
                         TextInput::make('merek_alat')
                             ->label('Merek Alat')
@@ -81,7 +87,7 @@ class AlatRumahTanggaForm
                             ->label('Kondisi Alat'),
                     ])->columns(3),
 
-                Section::make('Data Pengadaan & Supervisi')
+                Section::make('Data Pengadaan, Harga & Masa Pakai')
                     ->schema([
                         Grid::make(3)->schema([
                             DatePicker::make('tanggal_pengadaan')
@@ -101,10 +107,23 @@ class AlatRumahTanggaForm
                                 ->label('Sumber Pendanaan')
                                 ->placeholder('Contoh: Swadana'),
 
+                            TextInput::make('masa_pakai')
+                                ->label('Masa Pakai (Bulan)')
+                                ->numeric()
+                                ->helperText('Ditarik otomatis dari kategori, tapi bisa diedit manual.'),
+                        ]),
+
+                        Grid::make(2)->schema([
                             TextInput::make('harga_beli')
-                                ->label('Harga Beli')
+                                ->label('Biaya Awal (Rp)')
                                 ->prefix('Rp')
                                 ->numeric(),
+
+                            TextInput::make('harga_total')
+                                ->label('Nilai Perolehan / Harga Total (Rp)')
+                                ->prefix('Rp')
+                                ->numeric()
+                                ->helperText('Biaya awal + biaya lain. Akan otomatis sama dengan Biaya Awal jika dikosongkan saat simpan.'),
                         ]),
                     ]),
 

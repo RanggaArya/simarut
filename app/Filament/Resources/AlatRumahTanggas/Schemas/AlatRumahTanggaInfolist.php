@@ -10,6 +10,7 @@ use Filament\Schemas\Components\Section;
 use Filament\Infolists\Components\TextEntry;
 use Filament\Schemas\Schema;
 use Filament\Infolists\Components\Entry;
+use Illuminate\Support\HtmlString;
 
 class AlatRumahTanggaInfolist
 {

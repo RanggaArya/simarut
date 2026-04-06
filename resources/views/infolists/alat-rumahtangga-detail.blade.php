@@ -92,9 +92,9 @@
   <div class="p-6">
     <h3
       class="text-sm font-bold text-gray-900 dark:text-white uppercase tracking-wider border-b border-gray-200 dark:border-gray-700 pb-2 mb-4">
-      Spesifikasi & Pembelian
+      Spesifikasi, Masa Pakai & Penyusutan
     </h3>
-    <div class="grid grid-cols-2 md:grid-cols-6 gap-y-6 gap-x-4">
+    <div class="grid grid-cols-2 md:grid-cols-4 gap-y-6 gap-x-4">
       <div>
         <p class="text-xs text-gray-500 mb-1">Merek</p>
         <p class="font-medium text-gray-900 dark:text-gray-200 text-sm">{{ $record->merek_alat ?? '-' }}</p>
@@ -106,18 +106,51 @@
         </p>
       </div>
       <div>
-        <p class="text-xs text-gray-500 mb-1">Tahun Pengadaan</p>
-        <p class="font-medium text-gray-900 dark:text-gray-200 text-sm">{{ $record->tahun_pengadaan ?? '-' }}</p>
-      </div>
-      <div>
         <p class="text-xs text-gray-500 mb-1">Sumber Pendanaan</p>
         <p class="font-medium text-gray-900 dark:text-gray-200 text-sm">{{ $record->sumber_pendanaan ?? '-' }}</p>
       </div>
-      <div class="col-span-2 md:col-span-2">
-        <p class="text-xs text-gray-500 mb-1">Harga Beli</p>
-        <p class="font-bold text-green-600 dark:text-green-400 text-base">
+
+      <div>
+        <p class="text-xs text-gray-500 mb-1">Status Masa Pakai</p>
+        @if(!$record->masa_pakai)
+          <p class="font-medium text-gray-900 dark:text-gray-200 text-sm">-</p>
+        @elseif($record->sisa_masa_pakai <= 0)
+          <p class="font-bold text-red-600 dark:text-red-400 text-sm">Habis (0 Bulan)</p>
+          <p class="text-[10px] text-gray-500">*Dari total {{ $record->masa_pakai }} bulan</p>
+        @else
+          <p class="font-medium text-blue-600 dark:text-blue-400 text-sm">{{ $record->sisa_masa_pakai }} Bulan Tersisa</p>
+          <p class="text-[10px] text-gray-500">*Terpakai: {{ $record->bulan_terpakai }} dr {{ $record->masa_pakai }} bulan
+          </p>
+        @endif
+      </div>
+
+      <div>
+        <p class="text-xs text-gray-500 mb-1">Biaya Awal</p>
+        <p class="font-medium text-gray-900 dark:text-gray-200 text-base">
           Rp {{ number_format($record->harga_beli, 0, ',', '.') }}
         </p>
+      </div>
+      <div>
+        <p class="text-xs text-gray-500 mb-1">Nilai Perolehan (Total)</p>
+        <p class="font-medium text-gray-900 dark:text-gray-200 text-base">
+          Rp {{ number_format($record->harga_total ?? $record->harga_beli, 0, ',', '.') }}
+        </p>
+      </div>
+      <div class="col-span-2">
+        <p class="text-xs text-gray-500 mb-1">Nilai Aset Saat Ini (Residu)</p>
+        @if($record->harga_residu <= 0)
+          <p class="font-bold text-red-600 dark:text-red-400 text-xl">Rp 0</p>
+          <p class="text-[10px] text-gray-500">*Aset sudah disusutkan penuh dari total Rp
+            {{ number_format($record->harga_total ?? $record->harga_beli, 0, ',', '.') }}
+          </p>
+        @else
+          <p class="font-bold text-green-600 dark:text-green-400 text-xl">
+            Rp {{ number_format($record->harga_residu, 0, ',', '.') }}
+          </p>
+          <p class="text-[10px] text-gray-500">*Total penyusutan: Rp
+            {{ number_format($record->total_penyusutan, 0, ',', '.') }}
+          </p>
+        @endif
       </div>
     </div>
   </div>
