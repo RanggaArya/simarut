@@ -6,6 +6,6 @@ use Illuminate\Database\Eloquent\Model;
 
 class Kategori extends Model
 {
-    protected $fillable = ['nama_kategori','kode_kategori', 'masa_pakai_tahun'];
+    protected $fillable = ['nama_kategori','kode_kategori', 'masa_pakai_bulan'];
 
 }
