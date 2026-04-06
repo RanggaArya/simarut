@@ -87,7 +87,6 @@ class AlatRumahTanggaTable
                     )
                     ->color(fn ($state) => $state ? 'success' : 'gray'),
 
-
                 TextColumn::make('tahun_pengadaan')
                     ->label('Tahun Pengadaan')
                     ->sortable(),
@@ -95,6 +94,15 @@ class AlatRumahTanggaTable
                 TextColumn::make('harga_beli')
                     ->label('Harga Beli')
                     ->money('IDR')
+                    ->sortable()
+                    ->toggleable(isToggledHiddenByDefault: true),
+                TextColumn::make('harga_total')
+                    ->label('Harga Total')
+                    ->money('IDR')
+                    ->sortable()
+                    ->toggleable(isToggledHiddenByDefault: true),
+                TextColumn::make('masa_pakai_bulan')
+                    ->label('Masa Pakai (Bulan)')
                     ->sortable()
                     ->toggleable(isToggledHiddenByDefault: true),
             ])

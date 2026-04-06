@@ -175,6 +175,7 @@ class PerangkatImporter implements
         $harga_total = !empty($row['harga_total']) ? (int)preg_replace('/\D+/', '', (string)$row['harga_total']) : $harga;
         
         $tglPengadaan = $this->parseTanggal($row['tanggal_pengadaan'] ?? null);
+        $tglSupervisi = $this->parseTanggal($row['tanggal_supervisi'] ?? null);
         
         // Resolve IDs
         $tahun       = (int)($row['_tahun'] ?? ($row['tahun_pengadaan'] ?? now()->year));
@@ -188,8 +189,12 @@ class PerangkatImporter implements
         $kategori_id = $kategoriObj ? $kategoriObj->id : null;
 
         // --- LOGIC BARU UNTUK MASA PAKAI ---
-        // Jika di excel masa_pakai ada, pakai itu. Jika kosong, tarik otomatis dari Kategori
-        $masa_pakai = !empty($row['masa_pakai']) ? (int)$row['masa_pakai'] : ($kategoriObj->masa_pakai ?? null);
+        // Baca dari excel jika ada kolom 'masa_pakai_bulan' atau 'masa_pakai', jika tidak, ambil dari kategori
+        // 1. Ambil dari row yang sudah dinormalisasi menjadi 'masa_pakai_bulan'
+        $masa_pakai_excel = !empty($row['masa_pakai_bulan']) ? $row['masa_pakai_bulan'] : null;
+        
+        // 2. Jika kosong, pinjam dari kategori (kategoriObj->masa_pakai_bulan)
+        $masa_pakai_final = !empty($masa_pakai_excel) ? (int)$masa_pakai_excel : ($kategoriObj->masa_pakai_bulan ?? null);
 
         // CREATE
         Perangkat::create([
@@ -201,12 +206,12 @@ class PerangkatImporter implements
             'merek_alat'        => $row['merek_alat'] ?? null,
             'kondisi_id'        => $kondisi_id,
             'tanggal_pengadaan' => $tglPengadaan,
-            'tanggal_supervisi' => null, 
+            'tanggal_supervisi' => $tglSupervisi,
             'tahun_pengadaan'   => $tahun,
             'sumber_pendanaan'  => $row['sumber_pendanaan'] ?? null,
             'harga_beli'        => $harga,
             'harga_total'       => $harga_total, // Simpan harga_total
-            'masa_pakai'        => $masa_pakai,  // Simpan masa pakai
+            'masa_pakai_bulan'  => $masa_pakai_final,  // Simpan masa pakai
             'keterangan'        => $row['keterangan'] ?? null,
             'status_id'         => $status_id,
         ]);

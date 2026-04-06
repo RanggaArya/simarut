@@ -22,6 +22,10 @@ class KategorisTable
                 TextColumn::make('kode_kategori')
                     ->label('Kode Kategori')
                     ->sortable(),
+                TextColumn::make('masa_pakai_bulan')
+                    ->label('Masa Pakai')
+                    ->sortable()
+                    ->formatStateUsing(fn ($state) => $state ? "{$state} Bulan" : '-'),
             ])
             ->filters([
                 //

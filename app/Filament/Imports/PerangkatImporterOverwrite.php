@@ -32,9 +32,6 @@ class PerangkatImporterOverwrite implements
     use Importable;
     use MapsMaster;
 
-    /**
-     * @var array<string, true>
-     */
     private array $seenNomorInventaris = [];
 
     public function __construct()
@@ -78,8 +75,14 @@ class PerangkatImporterOverwrite implements
         $status_id  = $this->getOrCreateId($this->statusMap,  Status::class,  'nama_status',  $row['status'] ?? null);
         $kondisi_id = $this->getOrCreateId($this->kondisiMap, Kondisi::class, 'nama_kondisi', $row['kondisi'] ?? null);
 
-        $harga = !empty($row['harga']) ? (int)preg_replace('/\D+/', '', (string)$row['harga']) : null;
-        $tanggalDistribusi = $this->parseTanggal($row['tanggal_distribusi'] ?? null);
+        // --- PERBAIKAN LOGIKA HARGA ---
+        $hargaRaw = !empty($row['harga_beli']) ? $row['harga_beli'] : ($row['harga'] ?? null);
+        $harga = !empty($hargaRaw) ? (int)preg_replace('/\D+/', '', (string)$hargaRaw) : 0;
+        
+        $harga_total = !empty($row['harga_total']) ? (int)preg_replace('/\D+/', '', (string)$row['harga_total']) : $harga;
+
+        $tanggalPengadaan = $this->parseTanggal($row['tanggal_pengadaan'] ?? null);
+        $tglSupervisi = $this->parseTanggal($row['tanggal_supervisi'] ?? null);
         $kode = isset($row['kode']) ? (trim((string)$row['kode']) ?: null) : null;
 
         $jenis_id = null;
@@ -87,8 +90,12 @@ class PerangkatImporterOverwrite implements
         $tahun = (int) (now()->year);
 
         if ($nomor && ($parts = $this->parseNomorInventaris($nomor))) {
-            $jenis_id    = $this->resolveOrCreateJenisByKode($parts['kode_jenis']);
-            $kategori_id = $this->resolveOrCreateKategoriByKode($parts['kode_kat'], $namaPerangkat);
+            // PERBAIKAN: Gunakan fungsi yang benar dari MapsMaster
+            $jenis_id    = $this->resolveOrUpsertJenisFromNI($parts['prefix'], $parts['kode_jenis']);
+            
+            $katObj      = $this->resolveKategoriByKodeAndName($parts['kode_kat'], null, $namaPerangkat);
+            $kategori_id = $katObj ? $katObj->id : null;
+            
             $tahun       = $parts['tahun'];
         } else {
             $kategori_model = $this->resolveKategoriByNamaPerangkat($namaPerangkat);
@@ -119,6 +126,11 @@ class PerangkatImporterOverwrite implements
             $this->seenNomorInventaris[$nomor] = true;
         }
 
+        // --- PERBAIKAN LOGIKA MASA PAKAI ---
+        $kategoriObj = Kategori::find($kategori_id);
+        $masa_pakai_excel = !empty($row['masa_pakai_bulan']) ? $row['masa_pakai_bulan'] : null;
+        $masa_pakai_final = !empty($masa_pakai_excel) ? (int)$masa_pakai_excel : ($kategoriObj->masa_pakai_bulan ?? null);
+
         return new Perangkat([
             'nama_perangkat'     => $namaPerangkat,
             'tipe'               => $row['tipe'] ?? null,
@@ -127,11 +139,17 @@ class PerangkatImporterOverwrite implements
             'perolehan'          => $row['perolehan'] ?? null,
             'tahun_pengadaan'    => $tahun,
             'nomor_inventaris'   => $nomor,
-            'harga'              => $harga,
+            
+            // --- KOLOM YG DIPERBAIKI ---
+            'harga_beli'         => $harga, // Tadinya salah tulis jadi 'harga'
+            'harga_total'        => $harga_total,
+            'masa_pakai_bulan'   => $masa_pakai_final,
+
             'catatan'            => $row['catatan'] ?? null,
             'mutasi'             => $row['mutasi'] ?? null,
             'upgrade'            => $row['upgrade'] ?? null,
-            'tanggal_distribusi' => $tanggalDistribusi,
+            'tanggal_pengadaan' => $tanggalPengadaan,
+            'tanggal_supervisi'  => $tglSupervisi,
             'kode'               => $kode,
             'lokasi_id'          => $lokasi_id,
             'jenis_id'           => $jenis_id,

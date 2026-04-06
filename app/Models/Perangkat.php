@@ -42,55 +42,73 @@ class Perangkat extends Model
         'harga_beli' => 'integer',
   ];
 
-  // 2. Accessor: Hitung Bulan Terpakai
+  // 1. Indikator Pintar: Apakah aset ini nilainya > Rp 2 Juta?
+    public function getIsKenaPenyusutanAttribute(): bool
+    {
+        $basis_harga = $this->harga_total ?? $this->harga_beli ?? 0;
+        return $basis_harga > 2000000;
+    }
+
+    // 2. Accessor "Masa Pakai Aktif"
+    public function getMasaPakaiAktifAttribute(): int
+    {
+        // Jika harga <= 2 Juta, masa pakai dianggap 0 (Tidak disusutkan)
+        if (!$this->is_kena_penyusutan) return 0;
+        
+        return $this->masa_pakai_bulan ?? optional($this->kategori)->masa_pakai_bulan ?? 0;
+    }
+
+    // 3. Accessor: Hitung Bulan Terpakai
     public function getBulanTerpakaiAttribute(): int
     {
         if (!$this->tanggal_pengadaan) return 0;
-
-        $pengadaan = Carbon::parse($this->tanggal_pengadaan)->startOfMonth();
-        $sekarang = Carbon::now()->startOfMonth();
-
+        $pengadaan = \Carbon\Carbon::parse($this->tanggal_pengadaan)->startOfMonth();
+        $sekarang = \Carbon\Carbon::now()->startOfMonth();
         if ($pengadaan->greaterThan($sekarang)) return 0;
-
         return $pengadaan->diffInMonths($sekarang);
     }
 
-    // 3. Accessor: Hitung Sisa Masa Pakai
+    // 4. Accessor: Hitung Sisa Masa Pakai
     public function getSisaMasaPakaiAttribute(): int
     {
-        if (!$this->masa_pakai_bulan) return 0;
+        $mp = $this->masa_pakai_aktif; 
+        if (!$mp) return 0;
         
-        $sisa = $this->masa_pakai_bulan - $this->bulan_terpakai;
+        $sisa = $mp - $this->bulan_terpakai;
         return max(0, $sisa);
     }
 
-    // 4. Accessor: Total Penyusutan (Berapa banyak harga yang sudah susut)
+    // 5. Accessor: Total Penyusutan
     public function getTotalPenyusutanAttribute(): float
     {
-        $basis_harga = $this->harga_total ?? $this->harga_beli ?? 0;
+        // Jika harga <= 2 Juta, penyusutan = Rp 0
+        if (!$this->is_kena_penyusutan) return 0;
 
-        if (!$basis_harga || !$this->masa_pakai_bulan || $this->masa_pakai_bulan <= 0) {
+        $basis_harga = $this->harga_total ?? $this->harga_beli ?? 0;
+        $mp = $this->masa_pakai_aktif;
+
+        if (!$basis_harga || !$mp || $mp <= 0) {
             return 0;
         }
-
-        // Jika sudah melewati masa pakai, berarti menyusut sepenuhnya
-        if ($this->bulan_terpakai >= $this->masa_pakai_bulan) {
+        if ($this->bulan_terpakai >= $mp) {
             return (float) $basis_harga;
         }
-
-        $penyusutan_per_bulan = $basis_harga / $this->masa_pakai;
-        return $penyusutan_per_bulan * $this->bulan_terpakai;
+        return ($basis_harga / $mp) * $this->bulan_terpakai;
     }
 
-    // 5. Accessor: Harga Residu (Harga Saat Ini)
+    // 6. Accessor: Harga Residu
     public function getHargaResiduAttribute(): float
     {
         $basis_harga = $this->harga_total ?? $this->harga_beli ?? 0;
+        
+        // Jika harga <= 2 Juta, harga residu = harga beli utuh (tidak menyusut)
+        if (!$this->is_kena_penyusutan) return (float) $basis_harga;
 
-        if (!$basis_harga || !$this->masa_pakai_bulan || $this->masa_pakai <= 0) {
+        $mp = $this->masa_pakai_aktif;
+
+        if (!$basis_harga || !$mp || $mp <= 0) {
             return (float) $basis_harga;
         }
-
         $residu = $basis_harga - $this->total_penyusutan;
         return max(0, round($residu));
     }

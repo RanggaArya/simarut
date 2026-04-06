@@ -22,7 +22,12 @@ class KategoriForm
                 ->mask('999')
                 ->unique(ignoreRecord: true)
                 ->columnSpan('full'),
-
+            TextInput::make('masa_pakai_bulan')
+                ->label('Masa Pakai Default (Bulan)')
+                ->numeric()
+                ->nullable()
+                ->helperText('Akan digunakan sebagai default masa pakai saat import data perangkat.')
+                ->columnSpan('full'),
             ])->columns(2);
     }
 }

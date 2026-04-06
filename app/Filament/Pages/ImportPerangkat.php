@@ -22,7 +22,7 @@ use Illuminate\Support\Facades\Auth;
 use App\Models\User as AppUser;
 use Illuminate\Support\Facades\DB;
 use App\Filament\Imports\Traits\MapsMaster;
-use App\Support\NomorInventarisGenerator; // PENTING: Class Generator
+use App\Support\NomorInventarisGenerator;
 use UnitEnum;
 
 class ImportPerangkat extends Page 
@@ -59,9 +59,6 @@ class ImportPerangkat extends Page
     public static function canAccess(): bool
     {
         $user = Auth::user();
-        
-        // Cek apakah user valid DAN memiliki izin 'perangkat.import'
-        // Izin ini sudah ada di daftar 'super-admin' dan 'admin' pada file User.php
         return $user instanceof AppUser && $user->canDo('perangkat.import');
     }
 
@@ -101,7 +98,6 @@ class ImportPerangkat extends Page
                         ->minValue(1)
                         ->required(),
 
-                    // --- OPSI YANG DISEDERHANAKAN (HANYA SKIP & OVERWRITE) ---
                     Forms\Components\Radio::make('policy')
                         ->label('Kebijakan Duplikat (Berdasarkan Nomor Inventaris)')
                         ->options([
@@ -135,7 +131,6 @@ class ImportPerangkat extends Page
                     Schemas\Components\View::make('filament.import.preview-summary')
                         ->visible(fn() => $this->scanToken !== null),
 
-                    // Tombol Run Import
                     Schemas\Components\Actions::make([
                         Action::make('run')
                             ->label('Jalankan Import')
@@ -162,7 +157,6 @@ class ImportPerangkat extends Page
         $fullPath = Storage::disk('public')->path($state['file']);
         $headerRow = (int)($state['header_row'] ?? 1); 
 
-        // Anonymous Class untuk Membaca Excel
         $collector = new class($this, $headerRow) implements ToCollection, WithHeadingRow {
             public array $rows = [];
             public function __construct(private ImportPerangkat $page, private int $hRow) {}
@@ -186,7 +180,6 @@ class ImportPerangkat extends Page
         $rows = $collector->rows;
         $this->totalRows = count($rows);
 
-        // Ambil Headers untuk Preview Table
         $allKeys = [];
         foreach ($rows as $r) {
             foreach (array_keys($r) as $k) $allKeys[$k] = true;
@@ -196,14 +189,12 @@ class ImportPerangkat extends Page
         $this->headers = array_values(array_unique(array_merge($preferred, $others)));
         $this->previewRows = array_slice($rows, 0, $this->previewLimit);
 
-        // --- CEK DUPLIKAT (Database & Internal File) ---
         $numbersFound = [];
         $internalDupes = [];
         
         foreach ($rows as $r) {
             $n = $this->normalizeNomor($r['nomor_inventaris'] ?? '');
             if ($n) {
-                // Cek duplikat sesama baris di Excel
                 if (in_array($n, $numbersFound)) {
                     $internalDupes[] = $n;
                 }
@@ -219,7 +210,6 @@ class ImportPerangkat extends Page
                 ->all();
         }
 
-        // Gabungkan duplikat DB dan Internal
         $this->dupes = array_unique(array_merge($dbDupes, $internalDupes));
 
         $this->scanToken = (string) Str::uuid();
@@ -248,7 +238,6 @@ class ImportPerangkat extends Page
         $policy    = $this->data['policy'] ?? 'skip';
         $headerRow = $scan['header_row'] ?? 1;
 
-        // Baca Ulang File untuk Proses Import
         $collector = new class($this, $headerRow) implements ToCollection, WithHeadingRow {
             public array $rows = [];
             public function __construct(private ImportPerangkat $page, private int $hRow) {}
@@ -281,55 +270,55 @@ class ImportPerangkat extends Page
                     continue; 
                 }
 
-                // 1. Ambil / Generate Nomor Inventaris
                 $nomor = $this->normalizeNomor($row['nomor_inventaris'] ?? null);
                 
-                // 2. Resolve Kategori (Prioritas: Kode -> Nama Excel -> Nama Perangkat)
                 $excelKodeKat = $row['kode_kategori_excel'] ?? null;
                 $excelNamaKat = $row['kategori_excel'] ?? null;
                 $kategoriObj  = $this->resolveKategoriByKodeAndName($excelKodeKat, $excelNamaKat, $nama);
                 $kategori_id  = $kategoriObj ? $kategoriObj->id : null;
 
-                // 3. Resolve Jenis (Elektronik=B, dsb)
                 $jenisObj = $this->resolveOrCreateJenisByName($row['jenis'] ?? 'Hardware'); 
                 $jenis_id = $jenisObj ? $jenisObj->id : null;
 
                 $tahun = !empty($row['tahun_pengadaan']) ? (int)$row['tahun_pengadaan'] : (int) now()->year;
 
-                // --- LOGIC AUTO GENERATE ---
                 if ($nomor === null) {
-                    // Jika di Excel kosong, generate nomor baru
                     $nomor = NomorInventarisGenerator::generate($jenis_id, $kategori_id, $tahun);
                 }
 
-                // 4. Resolve Data Lain
                 $lokasi_id = $this->getOrCreateId($this->lokasiMap, Lokasi::class, 'nama_lokasi', $row['lokasi'] ?? null);
-                $status_id = $this->getOrCreateId($this->statusMap, Status::class, 'nama_status', $row['status'] ?? null); // Null jika kosong (tdk default 'Baik')
+                $status_id = $this->getOrCreateId($this->statusMap, Status::class, 'nama_status', $row['status'] ?? null); 
                 
-                $inputKondisi = !empty($row['kondisi']) ? $row['kondisi'] : 'Baik'; // Default Baik jika kosong
+                $inputKondisi = !empty($row['kondisi']) ? $row['kondisi'] : 'Baik'; 
                 $kondisi_id   = $this->getOrCreateId($this->kondisiMap, Kondisi::class, 'nama_kondisi', $inputKondisi);
 
                 $harga        = !empty($row['harga_beli']) ? (int)preg_replace('/\D+/', '', (string)$row['harga_beli']) : 0;
                 $tglPengadaan = $this->parseTanggal($row['tanggal_pengadaan'] ?? null);
+                $tglSupervisi = $this->parseTanggal($row['tanggal_supervisi'] ?? null);
 
-                // --- LOGIC DUPLICATE CHECK (SKIP vs OVERWRITE) ---
+                // --- 🚀 LOGIC BARU HARGA TOTAL & MASA PAKAI 🚀 ---
+                $harga_total = !empty($row['harga_total']) ? (int)preg_replace('/\D+/', '', (string)$row['harga_total']) : $harga;
+                $masa_pakai_excel = !empty($row['masa_pakai_bulan']) ? $row['masa_pakai_bulan'] : null;
+                $masa_pakai_final = !empty($masa_pakai_excel) ? (int)$masa_pakai_excel : ($kategoriObj->masa_pakai_bulan ?? null);
+                // --------------------------------------------------
+
                 $existing = Perangkat::where('nomor_inventaris', $nomor)->first();
 
                 if ($existing) {
-                    // Data sudah ada di DB
                     if ($policy === 'skip') {
-                        // Kebijakan SKIP: Jangan lakukan apa-apa
                         $this->skippedDupes++;
                     } else {
-                        // Kebijakan OVERWRITE: Timpa data
                         $existing->update([
                             'nama_perangkat'    => $nama,
                             'merek_alat'        => $row['merek_alat'] ?? null,
                             'sumber_pendanaan'  => $row['sumber_pendanaan'] ?? null,
                             'tahun_pengadaan'   => $tahun,
                             'harga_beli'        => $harga,
+                            'harga_total'       => $harga_total, // <-- DITAMBAHKAN
+                            'masa_pakai_bulan'  => $masa_pakai_final ?? $existing->masa_pakai_bulan, // <-- DITAMBAHKAN
                             'keterangan'        => $row['keterangan'] ?? null,
                             'tanggal_pengadaan' => $tglPengadaan,
+                            'tanggal_supervisi' => $tglSupervisi ?? $existing->tanggal_supervisi,
                             'lokasi_id'         => $lokasi_id,
                             'jenis_id'          => $jenis_id,
                             'status_id'         => $status_id,
@@ -339,7 +328,6 @@ class ImportPerangkat extends Page
                         $this->updatedCount++;
                     }
                 } else {
-                    // Data Belum Ada -> INSERT BARU
                     Perangkat::create([
                         'nama_perangkat'    => $nama,
                         'nomor_inventaris'  => $nomor,
@@ -347,8 +335,11 @@ class ImportPerangkat extends Page
                         'sumber_pendanaan'  => $row['sumber_pendanaan'] ?? null,
                         'tahun_pengadaan'   => $tahun,
                         'harga_beli'        => $harga,
+                        'harga_total'       => $harga_total, // <-- DITAMBAHKAN
+                        'masa_pakai_bulan'  => $masa_pakai_final, // <-- DITAMBAHKAN
                         'keterangan'        => $row['keterangan'] ?? null,
                         'tanggal_pengadaan' => $tglPengadaan,
+                        'tanggal_supervisi' => $tglSupervisi,
                         'lokasi_id'         => $lokasi_id,
                         'jenis_id'          => $jenis_id,
                         'status_id'         => $status_id,

@@ -39,8 +39,8 @@ class AlatRumahTanggaForm
                             ->afterStateUpdated(function (callable $set, callable $get, $state) {
                                 if ($state) {
                                     $kategori = Kategori::find($state);
-                                    if ($kategori && $kategori->masa_pakai && empty($get('masa_pakai'))) {
-                                        $set('masa_pakai', $kategori->masa_pakai);
+                                    if ($kategori && $kategori->masa_pakai_bulan && empty($get('masa_pakai_bulan'))) {
+                                        $set('masa_pakai_bulan', $kategori->masa_pakai_bulan);
                                     }
                                 }
                             })
@@ -107,10 +107,10 @@ class AlatRumahTanggaForm
                                 ->label('Sumber Pendanaan')
                                 ->placeholder('Contoh: Swadana'),
 
-                            TextInput::make('masa_pakai')
+                            TextInput::make('masa_pakai_bulan')
                                 ->label('Masa Pakai (Bulan)')
                                 ->numeric()
-                                ->helperText('Ditarik otomatis dari kategori, tapi bisa diedit manual.'),
+                                ->helperText('Ditarik dari kategori. *NB: Perhitungan penyusutan HANYA berlaku jika Nilai Perolehan > Rp 2.000.000.'),
                         ]),
 
                         Grid::make(2)->schema([

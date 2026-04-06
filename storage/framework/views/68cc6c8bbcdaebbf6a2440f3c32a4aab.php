@@ -7,11 +7,13 @@
     <div class="relative z-10 flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
       <div>
         <h2 class="text-2xl font-bold tracking-tight text-white">
-          {{ $record->nama_perangkat ?? 'Nama Tidak Diketahui' }}
+          <?php echo e($record->nama_perangkat ?? 'Nama Tidak Diketahui'); ?>
+
         </h2>
         <div class="flex items-center gap-3 mt-2 text-blue-100 text-sm font-medium">
           <span class="bg-white/20 px-2 py-1 rounded text-xs backdrop-blur-sm border border-white/20">
-            INV: {{ $record->nomor_inventaris ?? '-' }}
+            INV: <?php echo e($record->nomor_inventaris ?? '-'); ?>
+
           </span>
           <span class="flex items-center gap-1">
             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -19,7 +21,8 @@
                 d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z">
               </path>
             </svg>
-            {{ $record->kategori->nama_kategori ?? '-' }}
+            <?php echo e($record->kategori->nama_kategori ?? '-'); ?>
+
           </span>
         </div>
       </div>
@@ -30,12 +33,13 @@
           <span class="block text-[10px] text-blue-100 uppercase tracking-wider">Kondisi</span>
           <span class="text-sm font-bold text-white flex items-center justify-center gap-2"
             style="text-transform: capitalize !important;">
-            @if(strtolower($record->kondisi->nama_kondisi ?? '') == 'baik')
+            <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php endif; ?><?php if(strtolower($record->kondisi->nama_kondisi ?? '') == 'baik'): ?>
               <span class="w-2 h-2 rounded-full bg-green-400 animate-pulse"></span>
-            @else
+            <?php else: ?>
               <span class="w-2 h-2 rounded-full bg-yellow-400"></span>
-            @endif
-            {{ $record->kondisi->nama_kondisi ?? '-' }}
+            <?php endif; ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php endif; ?>
+            <?php echo e($record->kondisi->nama_kondisi ?? '-'); ?>
+
           </span>
         </div>
 
@@ -44,14 +48,15 @@
           <span class="block text-[10px] text-blue-100 uppercase tracking-wider">Status</span>
           <span class="text-sm font-bold text-white flex items-center justify-center gap-2"
             style="text-transform: capitalize !important;">
-            @if(strtolower($record->status->nama_status ?? '') == 'aktif')
+            <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php endif; ?><?php if(strtolower($record->status->nama_status ?? '') == 'aktif'): ?>
               <span class="w-2 h-2 rounded-full bg-green-400 animate-pulse"></span>
-            @elseif(strtolower($record->status->nama_status ?? '') == 'rusak')
+            <?php elseif(strtolower($record->status->nama_status ?? '') == 'rusak'): ?>
               <span class="w-2 h-2 rounded-full bg-red-400 animate-pulse"></span>
-            @else
+            <?php else: ?>
               <span class="w-2 h-2 rounded-full bg-yellow-400"></span>
-            @endif
-            {{ $record->status->nama_status ?? '-' }}
+            <?php endif; ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php endif; ?>
+            <?php echo e($record->status->nama_status ?? '-'); ?>
+
           </span>
         </div>
       </div>
@@ -71,7 +76,8 @@
         Lokasi Penempatan
       </span>
       <p class="mt-2 text-lg font-medium text-gray-900 dark:text-gray-100">
-        {{ $record->lokasi->nama_lokasi ?? '-' }}
+        <?php echo e($record->lokasi->nama_lokasi ?? '-'); ?>
+
       </p>
     </div>
     <div class="p-6 hover:bg-gray-50 dark:hover:bg-gray-700/50 transition duration-150">
@@ -84,7 +90,8 @@
         Jenis Perangkat
       </span>
       <p class="mt-2 text-lg font-medium text-gray-900 dark:text-gray-100">
-        {{ $record->jenis->nama_jenis ?? '-' }}
+        <?php echo e($record->jenis->nama_jenis ?? '-'); ?>
+
       </p>
     </div>
   </div>
@@ -97,22 +104,23 @@
     <div class="grid grid-cols-2 md:grid-cols-4 gap-y-6 gap-x-4">
       <div>
         <p class="text-xs text-gray-500 mb-1">Merek</p>
-        <p class="font-medium text-gray-900 dark:text-gray-200 text-sm">{{ $record->merek_alat ?? '-' }}</p>
+        <p class="font-medium text-gray-900 dark:text-gray-200 text-sm"><?php echo e($record->merek_alat ?? '-'); ?></p>
       </div>
       <div>
         <p class="text-xs text-gray-500 mb-1">Tanggal Pengadaan</p>
         <p class="font-medium text-gray-900 dark:text-gray-200 text-sm">
-          {{ $record->tanggal_pengadaan ? \Carbon\Carbon::parse($record->tanggal_pengadaan)->translatedFormat('d F Y') : '-' }}
+          <?php echo e($record->tanggal_pengadaan ? \Carbon\Carbon::parse($record->tanggal_pengadaan)->translatedFormat('d F Y') : '-'); ?>
+
         </p>
       </div>
       <div>
         <p class="text-xs text-gray-500 mb-1">Sumber Pendanaan</p>
-        <p class="font-medium text-gray-900 dark:text-gray-200 text-sm">{{ $record->sumber_pendanaan ?? '-' }}</p>
+        <p class="font-medium text-gray-900 dark:text-gray-200 text-sm"><?php echo e($record->sumber_pendanaan ?? '-'); ?></p>
       </div>
 
       <div>
         <p class="text-xs text-gray-500 mb-1">Status Masa Pakai</p>
-        @if(!$record->is_kena_penyusutan)
+        <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php endif; ?><?php if(!$record->is_kena_penyusutan): ?>
           <span
             class="inline-flex items-center gap-1 px-2 py-1 mt-1 text-xs font-medium text-gray-600 bg-gray-100 rounded-md dark:bg-gray-800 dark:text-gray-400 border border-gray-200 dark:border-gray-700">
             <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -122,36 +130,40 @@
             Tidak Disusutkan
           </span>
           <p class="text-[10px] text-gray-500 mt-1">*Nilai aset &le; Rp 2 Juta</p>
-        @elseif(!$record->masa_pakai_aktif)
+        <?php elseif(!$record->masa_pakai_aktif): ?>
           <p class="font-medium text-gray-900 dark:text-gray-200 text-sm">-</p>
-        @elseif($record->sisa_masa_pakai <= 0)
+        <?php elseif($record->sisa_masa_pakai <= 0): ?>
           <p class="font-bold text-red-600 dark:text-red-400 text-sm">Habis (0 Bulan)</p>
-          <p class="text-[10px] text-gray-500">*Dari total {{ $record->masa_pakai_aktif }} bulan</p>
-        @else
-          <p class="font-medium text-blue-600 dark:text-blue-400 text-sm">{{ $record->sisa_masa_pakai }} Bulan Tersisa</p>
-          <p class="text-[10px] text-gray-500">*Terpakai: {{ $record->bulan_terpakai }} dr {{ $record->masa_pakai_aktif }}
+          <p class="text-[10px] text-gray-500">*Dari total <?php echo e($record->masa_pakai_aktif); ?> bulan</p>
+        <?php else: ?>
+          <p class="font-medium text-blue-600 dark:text-blue-400 text-sm"><?php echo e($record->sisa_masa_pakai); ?> Bulan Tersisa</p>
+          <p class="text-[10px] text-gray-500">*Terpakai: <?php echo e($record->bulan_terpakai); ?> dr <?php echo e($record->masa_pakai_aktif); ?>
+
             bulan</p>
-        @endif
+        <?php endif; ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php endif; ?>
       </div>
 
       <div>
         <p class="text-xs text-gray-500 mb-1">Biaya Awal</p>
         <p class="font-medium text-gray-900 dark:text-gray-200 text-base">
-          Rp {{ number_format($record->harga_beli, 0, ',', '.') }}
+          Rp <?php echo e(number_format($record->harga_beli, 0, ',', '.')); ?>
+
         </p>
       </div>
       <div>
         <p class="text-xs text-gray-500 mb-1">Nilai Perolehan (Total)</p>
         <p class="font-medium text-gray-900 dark:text-gray-200 text-base">
-          Rp {{ number_format($record->harga_total ?? $record->harga_beli, 0, ',', '.') }}
+          Rp <?php echo e(number_format($record->harga_total ?? $record->harga_beli, 0, ',', '.')); ?>
+
         </p>
       </div>
       <div class="col-span-2">
         <p class="text-xs text-gray-500 mb-1">Nilai Aset Saat Ini (Residu)</p>
 
-        @if(!$record->is_kena_penyusutan)
+        <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php endif; ?><?php if(!$record->is_kena_penyusutan): ?>
           <p class="font-bold text-gray-700 dark:text-gray-300 text-xl">
-            Rp {{ number_format($record->harga_total ?? $record->harga_beli ?? 0, 0, ',', '.') }}
+            Rp <?php echo e(number_format($record->harga_total ?? $record->harga_beli ?? 0, 0, ',', '.')); ?>
+
           </p>
           <div class="mt-1 flex items-start gap-1">
             <svg class="w-3.5 h-3.5 text-yellow-500 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor"
@@ -164,17 +176,18 @@
               dikenakan depresiasi.
             </p>
           </div>
-        @elseif($record->harga_residu <= 0)
+        <?php elseif($record->harga_residu <= 0): ?>
           <p class="font-bold text-red-600 dark:text-red-400 text-xl">Rp 0</p>
           <p class="text-[10px] text-gray-500">*Aset sudah disusutkan penuh dari total Rp
-            {{ number_format($record->harga_total ?? $record->harga_beli, 0, ',', '.') }}</p>
-        @else
+            <?php echo e(number_format($record->harga_total ?? $record->harga_beli, 0, ',', '.')); ?></p>
+        <?php else: ?>
           <p class="font-bold text-green-600 dark:text-green-400 text-xl">
-            Rp {{ number_format($record->harga_residu, 0, ',', '.') }}
+            Rp <?php echo e(number_format($record->harga_residu, 0, ',', '.')); ?>
+
           </p>
           <p class="text-[10px] text-gray-500">*Total penyusutan: Rp
-            {{ number_format($record->total_penyusutan, 0, ',', '.') }}</p>
-        @endif
+            <?php echo e(number_format($record->total_penyusutan, 0, ',', '.')); ?></p>
+        <?php endif; ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php endif; ?>
       </div>
     </div>
   </div>
@@ -190,18 +203,18 @@
         <p class="text-xs text-gray-500 mb-1">Tanggal Supervisi Terakhir</p>
         <p
           class="font-medium text-sm
-            {{ $record->tanggal_supervisi ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400' }}">
+            <?php echo e($record->tanggal_supervisi ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'); ?>">
 
-          {{ $record->tanggal_supervisi
+          <?php echo e($record->tanggal_supervisi
   ? \Carbon\Carbon::parse($record->tanggal_supervisi)->translatedFormat('d F Y')
-  : 'Belum Supervisi'
-            }}
+  : 'Belum Supervisi'); ?>
+
         </p>
       </div>
     </div>
   </div>
 
-  @if($record->keterangan)
+  <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php endif; ?><?php if($record->keterangan): ?>
     <div class="px-6 pb-6">
       <div class="bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-700 rounded-lg p-4">
         <h4 class="text-xs font-bold text-yellow-800 dark:text-yellow-500 uppercase mb-2 flex items-center gap-2">
@@ -212,19 +225,19 @@
           Catatan Tambahan
         </h4>
         <p class="text-sm text-gray-700 dark:text-gray-300 italic">
-          "{{ $record->keterangan }}"
+          "<?php echo e($record->keterangan); ?>"
         </p>
       </div>
     </div>
-  @endif
+  <?php endif; ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php endif; ?>
 
   <div
     class="bg-gray-50 dark:bg-gray-900 px-6 py-3 border-t border-gray-200 dark:border-gray-700 flex justify-between items-center text-xs text-gray-400">
     <div>
-      Dibuat: <span class="font-medium">{{ $record->created_at?->format('d M Y H:i') }}</span>
+      Dibuat: <span class="font-medium"><?php echo e($record->created_at?->format('d M Y H:i')); ?></span>
     </div>
     <div>
-      Update: <span class="font-medium">{{ $record->updated_at?->format('d M Y H:i') }}</span>
+      Update: <span class="font-medium"><?php echo e($record->updated_at?->format('d M Y H:i')); ?></span>
     </div>
   </div>
-</div>
+</div><?php /**PATH D:\Informatika V2\INVENTARIS MIPA\Inven-RT\simarut_lastest\resources\views/infolists/alat-rumahtangga-detail.blade.php ENDPATH**/ ?>
