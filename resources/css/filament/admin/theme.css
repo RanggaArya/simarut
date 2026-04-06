@@ -1,0 +1,154 @@
+@import "../../../../vendor/filament/filament/resources/css/theme.css";
+
+@source "../../../../app/Filament/**/*";
+@source "../../../../resources/views/filament/**/*";
+@source "../../../../resources/views/infolists/**/*";
+@source "../../../views";
+
+@tailwind utilities;
+
+/* ===== Variables Configuration (TEMA MERAH MENYALA VIP) ===== */
+:root {
+    --brand: 220 38 38;    /* Merah Menyala / Red 600 (#dc2626) - Lebih Tajam & Kuat */
+    --brand2: 127 29 29;   /* Merah Darah / Red 900 (#7f1d1d) - Untuk Gradasi Elegan */
+
+    /* Default (Light Mode) Variables */
+    --glass-bg: rgba(255, 255, 255, 0.85); 
+    --glass-border: rgba(0, 0, 0, 0.08);
+    --glass-blur: 18px;
+    --item-hover: rgba(220, 38, 38, 0.08); /* Hover merah terang */
+    --input-bg: rgba(0, 0, 0, 0.03);
+    --input-border: rgba(0, 0, 0, 0.1);
+    --card-shadow: 0 10px 30px rgba(0,0,0,0.08);
+}
+
+/* Dark Mode Overrides */
+.dark {
+    --glass-bg: rgba(15, 15, 15, 0.75); 
+    --glass-border: rgba(255, 255, 255, 0.06);
+    --item-hover: rgba(220, 38, 38, 0.20); /* Hover merah terang di dark mode */
+    --input-bg: rgba(255, 255, 255, 0.04);
+    --input-border: rgba(255, 255, 255, 0.08);
+    --card-shadow: 0 18px 40px rgba(0,0,0,0.5);
+}
+
+/* ===== Background Aurora (Nuansa Merah Lebih Menyala) ===== */
+.fi-body {
+    /* Light Mode Background */
+    background:
+        radial-gradient(1000px 500px at 20% -10%, rgba(220,38,38,0.15), transparent 60%),
+        radial-gradient(800px 400px at 100% 20%, rgba(127,29,29,0.10), transparent 50%),
+        linear-gradient(180deg, #f9fafb 0%, #ffffff 100%);
+    background-attachment: fixed;
+    min-height: 100vh;
+}
+
+.dark .fi-body {
+    /* Dark Mode Background */
+    background:
+        radial-gradient(1200px 600px at 20% -10%, rgba(220,38,38,0.30), transparent 60%),
+        radial-gradient(900px 500px at 110% 20%, rgba(127,29,29,0.45), transparent 55%),
+        radial-gradient(900px 700px at 30% 120%, rgba(220,38,38,0.20), transparent 55%),
+        linear-gradient(180deg, #09090b 0%, #000000 100%);
+    background-attachment: fixed;
+}
+
+/* ===== Sidebar Glass ===== */
+.fi-sidebar {
+    background: var(--glass-bg) !important;
+    backdrop-filter: blur(var(--glass-blur));
+    border-right: 1px solid var(--glass-border);
+}
+
+.fi-sidebar-header {
+    border-bottom: 1px solid var(--glass-border);
+}
+
+/* Active Nav */
+.fi-sidebar-item.fi-active > a {
+    background: rgba(var(--brand), .1) !important;
+    border: 1px solid rgba(var(--brand), .25) !important;
+    color: rgb(var(--brand)) !important;
+}
+
+.fi-sidebar-item > a:hover {
+    background: var(--item-hover) !important;
+}
+
+/* ===== Topbar ===== */
+.fi-topbar {
+    background: var(--glass-bg) !important;
+    backdrop-filter: blur(var(--glass-blur));
+    border-bottom: 1px solid var(--glass-border);
+}
+
+/* ===== Cards / Panels ===== */
+.fi-section,
+.fi-card {
+    background: var(--glass-bg) !important;
+    backdrop-filter: blur(var(--glass-blur));
+    border: 1px solid var(--glass-border) !important;
+    border-radius: 18px !important;
+    box-shadow: var(--card-shadow);
+}
+
+/* ===== Tables (SUDAH DIPERBAIKI UNTUK STICKY & FREEZE) ===== */
+.fi-ta-table {
+    border-radius: 18px !important;
+    overflow: visible !important; /* WAJIB VISIBLE AGAR STICKY JALAN! */
+    border: 1px solid var(--glass-border);
+}
+
+/* Hapus background transparan di baris tabel agar fitur freeze tidak berantakan */
+.fi-ta-header {
+    background: transparent !important;
+}
+
+/* ===== Inputs ===== */
+.fi-input,
+.fi-select-input,
+.fi-input-wrp,
+.fi-fo-file-upload-input-ctn {
+    border-radius: 14px !important;
+    background: var(--input-bg) !important;
+    border-color: var(--input-border) !important;
+}
+
+.fi-input:focus,
+.fi-select-input:focus {
+    outline: none !important;
+    border-color: rgba(var(--brand), .6) !important;
+    box-shadow: 0 0 0 4px rgba(var(--brand), .18) !important;
+}
+
+/* ===== Buttons ===== */
+.fi-btn {
+    border-radius: 14px !important;
+    box-shadow: 0 10px 20px -5px rgba(0,0,0,0.15);
+}
+
+.dark .fi-btn {
+    box-shadow: 0 12px 24px rgba(0,0,0,.35);
+}
+
+.fi-btn-color-primary {
+    background: linear-gradient(135deg,
+        rgba(var(--brand), 1),
+        rgba(var(--brand2), 1)
+    ) !important;
+    border: 0 !important;
+    color: white !important;
+}
+
+.fi-btn-color-primary:hover {
+    filter: brightness(1.15);
+}
+
+/* ===== Typography tweaks ===== */
+.fi-header-heading {
+    letter-spacing: -0.02em;
+}
+
+.fi-ta-text-item {
+    color: inherit;
+}
