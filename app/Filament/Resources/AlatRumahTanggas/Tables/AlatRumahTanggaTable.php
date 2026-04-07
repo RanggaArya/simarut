@@ -73,38 +73,74 @@ class AlatRumahTanggaTable
                     ->label('Tgl Pengadaan')
                     ->date()
                     ->sortable()
-                    ->toggleable(isToggledHiddenByDefault: true)
                     ->toggleable(isToggledHiddenByDefault: true),
 
                 TextColumn::make('tanggal_supervisi')
                     ->label('Tgl Supervisi')
-                    ->sortable()
-                    ->placeholder('Belum supervisi')
-                    ->formatStateUsing(fn ($state) =>
-                        $state
-                            ? Carbon::parse($state)->translatedFormat('d M Y')
-                            : 'Belum supervisi'
-                    )
-                    ->color(fn ($state) => $state ? 'success' : 'gray'),
+                    ->getStateUsing(function (Perangkat $record) {
+                        // 1. Cek apakah harga di bawah/sama dengan 2 Juta (Ekstrakomptabel)
+                        if (!$record->is_kena_penyusutan) {
+                            return 'Tidak Wajib';
+                        }
+                        
+                        // 2. Jika Wajib (> 2 Juta), cek apakah ada tanggalnya
+                        return $record->tanggal_supervisi_aktif 
+                            ? Carbon::parse($record->tanggal_supervisi_aktif)->translatedFormat('d M Y') 
+                            : 'Belum Supervisi';
+                    })
+                    ->badge() // Membuatnya jadi kotak warna-warni yang profesional
+                    ->color(function (Perangkat $record) {
+                        // Atur warna otomatis berdasarkan kondisinya
+                        if (!$record->is_kena_penyusutan) {
+                            return 'gray'; // Abu-abu untuk yang tidak wajib
+                        }
+                        return $record->tanggal_supervisi_aktif ? 'success' : 'danger'; // Hijau jika ada, Merah jika belum
+                    })
+                    ->sortable(),
 
                 TextColumn::make('tahun_pengadaan')
-                    ->label('Tahun Pengadaan')
-                    ->sortable(),
+                    ->label('Tahun')
+                    ->sortable()
+                    ->toggleable(isToggledHiddenByDefault: true),
 
                 TextColumn::make('harga_beli')
                     ->label('Harga Beli')
-                    ->money('IDR')
+                    ->money('IDR', locale: 'id')
                     ->sortable()
                     ->toggleable(isToggledHiddenByDefault: true),
+                
                 TextColumn::make('harga_total')
-                    ->label('Harga Total')
-                    ->money('IDR')
+                    ->label('Nilai Perolehan')
+                    ->money('IDR', locale: 'id')
                     ->sortable()
                     ->toggleable(isToggledHiddenByDefault: true),
+
+                // 👇 MODIFIKASI: MASA PAKAI DIBUAT PINTAR 👇
                 TextColumn::make('masa_pakai_bulan')
-                    ->label('Masa Pakai (Bulan)')
-                    ->sortable()
+                    ->label('Masa Pakai')
+                    ->getStateUsing(fn (Perangkat $record) => $record->masa_pakai_aktif)
+                    ->formatStateUsing(fn (Perangkat $record, $state) => 
+                        !$record->is_kena_penyusutan ? 'Ekstrakomptabel' : $state . ' Bulan'
+                    )
+                    ->badge()
+                    ->color(fn (Perangkat $record) => !$record->is_kena_penyusutan ? 'warning' : 'info')
                     ->toggleable(isToggledHiddenByDefault: true),
+
+                // 👇 TAMBAHAN BARU: NILAI RESIDU TERKINI 👇
+                TextColumn::make('harga_residu')
+                    ->label('Nilai Saat Ini (Residu)')
+                    ->getStateUsing(fn (Perangkat $record) => $record->harga_residu)
+                    ->money('IDR', locale: 'id')
+                    ->sortable()
+                    ->weight('bold')
+                    ->color(fn (Perangkat $record) => 
+                        !$record->is_kena_penyusutan ? 'gray' : ($record->harga_residu <= 0 ? 'danger' : 'success')
+                    )
+                    // Jika ekstrakomptabel, beri keterangan kecil di bawah harganya
+                    ->description(fn (Perangkat $record) => 
+                        !$record->is_kena_penyusutan ? 'Tidak disusutkan' : 
+                        ($record->harga_residu <= 0 ? 'Penyusutan Selesai' : 'Sisa: ' . $record->sisa_masa_pakai . ' Bulan')
+                    ),
             ])
             ->filters([
                 SelectFilter::make('lokasi_id')

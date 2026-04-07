@@ -113,6 +113,29 @@ class Perangkat extends Model
         return max(0, round($residu));
     }
 
+    /**
+     * Mengambil Tanggal Supervisi paling baru (Bandingkan tabel perangkats vs supervisis)
+     */
+    public function getTanggalSupervisiAktifAttribute()
+    {
+        $tgl_db = $this->tanggal_supervisi;
+        
+        // PERBAIKAN: Cari berdasarkan ID perangkat, dan ambil nilai maksimal dari kolom 'tanggal'
+        $tgl_relasi = \App\Models\Supervisi::where('perangkat_id', $this->id)
+                                         ->max('tanggal'); 
+
+        // Jika tidak ada histori di tabel supervisi, pakai yang ada di DB perangkat
+        if (!$tgl_relasi) return $tgl_db;
+
+        // Jika di DB perangkat kosong tapi di histori ada, pakai dari histori
+        if (!$tgl_db) return $tgl_relasi;
+
+        // Jika keduanya ada, bandingkan mana yang lebih baru
+        return \Carbon\Carbon::parse($tgl_relasi)->greaterThan(\Carbon\Carbon::parse($tgl_db)) 
+            ? $tgl_relasi 
+            : $tgl_db;
+    }
+
   public function lokasi(): BelongsTo
   {
     return $this->belongsTo(Lokasi::class);

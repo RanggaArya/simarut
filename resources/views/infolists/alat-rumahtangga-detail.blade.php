@@ -465,25 +465,75 @@
   </div>
 
   <div class="p-6">
-    <h3
-      class="text-sm font-bold text-gray-900 dark:text-white uppercase tracking-wider border-b border-gray-200 dark:border-gray-700 pb-2 mb-4">
-      Supervisi
-    </h3>
+    <div class="flex items-center gap-2 border-b border-gray-200 dark:border-gray-700 pb-3 mb-5">
+      <svg class="w-5 h-5 text-indigo-600 dark:text-indigo-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+          d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4">
+        </path>
+      </svg>
+      <h3 class="text-sm font-bold text-gray-900 dark:text-white uppercase tracking-wider">
+        Status Supervisi
+      </h3>
+    </div>
 
-    <div class="grid grid-cols-2 md:grid-cols-4 gap-y-6 gap-x-4">
-      <div>
-        <p class="text-xs text-gray-500 mb-1">Tanggal Supervisi Terakhir</p>
-        <p
-          class="font-medium text-sm
-            {{ $record->tanggal_supervisi ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400' }}">
-
-          {{ $record->tanggal_supervisi
-  ? \Carbon\Carbon::parse($record->tanggal_supervisi)->translatedFormat('d F Y')
-  : 'Belum Supervisi'
-            }}
+    @if(!$record->is_kena_penyusutan)
+      <div
+        class="flex flex-col items-center justify-center py-6 px-4 text-center border border-dashed border-gray-300 dark:border-gray-600 rounded-xl bg-gray-50 dark:bg-gray-800/50">
+        <span
+          class="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold text-gray-600 bg-gray-200 rounded-md dark:bg-gray-700 dark:text-gray-300 mb-2 border border-gray-300 dark:border-gray-600">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+              d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636"></path>
+          </svg>
+          Tidak Wajib Supervisi
+        </span>
+        <p class="text-sm text-gray-600 dark:text-gray-400 max-w-lg mt-1">
+          Aset ini termasuk dalam inventaris minor (Nilai perolehan &le; Rp 2.000.000), sehingga sistem tidak mewajibkan
+          jadwal supervisi berkala.
         </p>
       </div>
-    </div>
+    @else
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-y-6 gap-x-4">
+        <div
+          class="p-5 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 shadow-sm relative overflow-hidden">
+          <p class="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-3">Tanggal Supervisi Terakhir</p>
+
+          @if($record->tanggal_supervisi_aktif)
+            <div class="flex items-center gap-3">
+              <div
+                class="w-10 h-10 rounded-full bg-green-100 dark:bg-green-900/30 flex items-center justify-center text-green-600 dark:text-green-400 shrink-0">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+                </svg>
+              </div>
+              <div>
+                <p class="font-bold text-lg text-gray-900 dark:text-white leading-tight">
+                  {{ \Carbon\Carbon::parse($record->tanggal_supervisi_aktif)->translatedFormat('d F Y') }}
+                </p>
+                <p class="text-[10px] text-green-600 dark:text-green-400 font-medium mt-0.5">Tercatat di sistem</p>
+              </div>
+            </div>
+          @else
+            <div class="flex items-center gap-3">
+              <div
+                class="w-10 h-10 rounded-full bg-red-100 dark:bg-red-900/30 flex items-center justify-center text-red-600 dark:text-red-400 shrink-0">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                    d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                </svg>
+              </div>
+              <div>
+                <p class="font-bold text-lg text-red-600 dark:text-red-400 leading-tight">
+                  Belum Supervisi
+                </p>
+                <p class="text-[10px] text-red-500 dark:text-red-400 font-medium mt-0.5 animate-pulse">Memerlukan pengecekan
+                  segera!</p>
+              </div>
+            </div>
+          @endif
+        </div>
+      </div>
+    @endif
   </div>
 
   @if($record->keterangan)
