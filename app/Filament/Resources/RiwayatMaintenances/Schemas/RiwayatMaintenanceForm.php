@@ -57,9 +57,9 @@ class RiwayatMaintenanceForm
           }),
 
         TextInput::make('user_id')
-          ->hidden()
-          ->dehydrated()
-          ->default(fn() => Auth::id()),
+        ->hidden()
+        ->default(fn () => Auth::id())
+        ->dehydrated(true),
 
         DatePicker::make('tanggal_maintenance')
           ->label('Tanggal Maintenance')

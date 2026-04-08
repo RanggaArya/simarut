@@ -8,3 +8,7 @@ php artisan migrate:fresh --seed
 
 php artisan schedule:clear-cache
 php artisan cache:clear
+
+
+php artisan schedule:work
+* * * * * php /path-to-project/artisan schedule:run >> /dev/null 2>&1

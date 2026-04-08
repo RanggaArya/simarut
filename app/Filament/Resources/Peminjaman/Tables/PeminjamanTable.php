@@ -45,15 +45,20 @@ class peminjamanTable
       ])
       ->recordActions([
         ViewAction::make(),
-        EditAction::make(),
+        EditAction::make()
+          ->visible(fn($record) =>
+            !in_array($record->status, ['Dikembalikan', 'Ditolak'], true)
+          ),
+
+        // ✅ APPROVE (Menunggu → Dipinjam)
         Action::make('approve')
           ->label('Setujui')
           ->icon('heroicon-o-check')
           ->color('success')
           ->requiresConfirmation()
-          ->visible(
-            fn(Peminjaman $record) =>
-            in_array(Auth::user()?->role, ['admin', 'super-admin'], true) && $record->status === 'Menunggu'
+          ->visible(fn(Peminjaman $record) =>
+            in_array(Auth::user()?->role, ['admin', 'super-admin'], true)
+            && $record->status === 'Menunggu'
           )
           ->action(function (Peminjaman $record): void {
             $record->update([
@@ -61,12 +66,14 @@ class peminjamanTable
               'approved_by_user_id' => Auth::id(),
               'approved_at' => now('Asia/Jakarta'),
             ]);
+
             if ($record->peminjam_email) {
               Notification::route('mail', $record->peminjam_email)
                 ->notify(new PeminjamanApproved($record));
             }
           }),
 
+        // ❌ REJECT (Menunggu → Ditolak)
         Action::make('reject')
           ->label('Tolak')
           ->icon('heroicon-o-x-mark')
@@ -77,9 +84,9 @@ class peminjamanTable
               ->rows(3)
           ])
           ->requiresConfirmation()
-          ->visible(
-            fn(Peminjaman $record) =>
-            in_array(Auth::user()?->role, ['admin', 'super-admin'], true) && $record->status === 'Menunggu'
+          ->visible(fn(Peminjaman $record) =>
+            in_array(Auth::user()?->role, ['admin', 'super-admin'], true)
+            && $record->status === 'Menunggu'
           )
           ->action(function (Peminjaman $record, array $data): void {
             $record->update([
@@ -87,14 +94,49 @@ class peminjamanTable
               'approved_by_user_id' => Auth::id(),
               'rejected_at' => now('Asia/Jakarta'),
               'catatan' => trim(
-                ($record->catatan ? $record->catatan . "/n" : '') . 'Ditolak: ' . ($data['reason'] ?? '-')
+                ($record->catatan ? $record->catatan . "\n" : '') .
+                'Ditolak: ' . ($data['reason'] ?? '-')
               )
             ]);
+
             if ($record->peminjam_email) {
               Notification::route('mail', $record->peminjam_email)
                 ->notify(new PeminjamanRejected($record, $data['reason'] ?? null));
             }
           }),
+
+        // 🔄 RETURN (Dipinjam / Terlambat → Dikembalikan)
+        Action::make('returned')
+          ->label('Dikembalikan')
+          ->icon('heroicon-o-arrow-uturn-left')
+          ->color('success')
+          ->requiresConfirmation()
+          ->visible(fn(Peminjaman $record) =>
+            in_array(Auth::user()?->role, ['admin', 'super-admin'], true)
+            && in_array($record->status, ['Dipinjam', 'Terlambat'], true)
+          )
+          ->action(function (Peminjaman $record): void {
+            $record->update([
+              'status' => 'Dikembalikan',
+            ]);
+          }),
+
+        // ⚠️ LATE (Dipinjam → Terlambat)
+        Action::make('late')
+          ->label('Terlambat')
+          ->icon('heroicon-o-exclamation-triangle')
+          ->color('danger')
+          ->requiresConfirmation()
+          ->visible(fn(Peminjaman $record) =>
+            in_array(Auth::user()?->role, ['admin', 'super-admin'], true)
+            && $record->status === 'Dipinjam'
+          )
+          ->action(function (Peminjaman $record): void {
+            $record->update([
+              'status' => 'Terlambat',
+            ]);
+          }),
+
       ])
       ->toolbarActions([
         BulkActionGroup::make([
